@@ -1,0 +1,11 @@
+{
+  "tests": [
+    {
+      "name": "GET transactions list",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "bodyMatcher": "none"
+    }
+  ]
+}

@@ -1,5 +1,10 @@
 import { useState, useRef, useCallback } from 'react';
 import Icon from '@/components/ui/icon';
+import func2url from '../../backend/func2url.json';
+
+const API = {
+  transactions: func2url.transactions,
+};
 
 type Screen = 'amount' | 'amount_ok' | 'card' | 'processing' | 'success';
 
@@ -73,6 +78,11 @@ export default function Index() {
     const iv = setInterval(() => setProgress(p => { if (p >= 100) { clearInterval(iv); return 100; } return p + 7; }), 75);
     setTimeout(() => {
       clearInterval(iv); setProgress(100); successSound(); setScreen('success');
+      fetch(API.transactions, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: parseInt(amount), status: 'success', card_mask: '**** 7734' }),
+      }).catch(() => {});
       setTimeout(() => { setAmount(''); setProgress(0); setScreen('amount'); }, 2600);
     }, 1400);
   };
