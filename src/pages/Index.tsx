@@ -41,7 +41,7 @@ function useSound() {
   return { keyBeep, okBeep, cardBeep, successSound };
 }
 
-function formatAmount(raw: string) {
+function fmt(raw: string) {
   if (!raw) return '0,00';
   return (parseInt(raw, 10) / 100).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
@@ -51,15 +51,10 @@ export default function Index() {
   const [amount, setAmount] = useState('');
   const [progress, setProgress] = useState(0);
   const { keyBeep, okBeep, cardBeep, successSound } = useSound();
+  const formatted = fmt(amount);
 
-  const formatted = formatAmount(amount);
-
-  const handleKey = (k: string) => {
-    keyBeep();
-    if (amount.length >= 8) return;
-    setAmount(prev => prev + k);
-  };
-  const handleDelete = () => { keyBeep(); setAmount(prev => prev.slice(0, -1)); };
+  const handleKey = (k: string) => { keyBeep(); if (amount.length < 8) setAmount(p => p + k); };
+  const handleDelete = () => { keyBeep(); setAmount(p => p.slice(0, -1)); };
   const handleClear = () => { keyBeep(); setAmount(''); };
   const handleCancel = () => { keyBeep(); setAmount(''); setScreen('amount'); };
 
@@ -77,254 +72,213 @@ export default function Index() {
     setProgress(0);
     const iv = setInterval(() => setProgress(p => { if (p >= 100) { clearInterval(iv); return 100; } return p + 7; }), 75);
     setTimeout(() => {
-      clearInterval(iv);
-      setProgress(100);
-      successSound();
-      setScreen('success');
+      clearInterval(iv); setProgress(100); successSound(); setScreen('success');
       setTimeout(() => { setAmount(''); setProgress(0); setScreen('amount'); }, 2600);
     }, 1400);
   };
 
-  return (
-    <div className="fixed inset-0 flex flex-col font-sans select-none"
-      style={{ background: '#0e1f12' }}>
+  const btnBase: React.CSSProperties = {
+    height: 64,
+    fontSize: 26,
+    borderRadius: 14,
+    background: 'linear-gradient(180deg,#1c2e1e 0%,#111a12 100%)',
+    border: '1px solid rgba(33,160,56,0.22)',
+    color: '#ffffff',
+    boxShadow: '0 3px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)',
+    fontFamily: 'Roboto Mono, monospace',
+    fontWeight: 600,
+    cursor: 'pointer',
+  };
 
-      {/* ШАПКА */}
-      <div className="flex items-center justify-between px-6 py-3 flex-shrink-0"
-        style={{ background: '#0a1a0d', borderBottom: '1px solid rgba(33,160,56,0.3)' }}>
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-            style={{ background: 'linear-gradient(135deg,#21A038,#0d6e25)', boxShadow: '0 0 12px rgba(33,160,56,0.5)' }}>
-            <span className="text-white text-[11px] font-black">СБ</span>
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'linear-gradient(135deg,#0a150b 0%,#111 100%)',
+      fontFamily: 'Roboto, sans-serif',
+    }}>
+      {/* Корпус */}
+      <div style={{
+        width: 340,
+        height: '92vh',
+        maxHeight: 760,
+        minHeight: 600,
+        background: 'linear-gradient(170deg,#2c2c2c 0%,#191919 100%)',
+        borderRadius: 24,
+        boxShadow: '0 40px 100px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.07)',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}>
+
+        {/* Шапка */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '10px 18px', flexShrink: 0,
+          background: '#0c1a0e', borderBottom: '1px solid rgba(33,160,56,0.4)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{
+              width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+              background: 'linear-gradient(135deg,#21A038,#0d6e25)',
+              boxShadow: '0 0 10px rgba(33,160,56,0.6)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <span style={{ color: '#fff', fontSize: 10, fontWeight: 900 }}>СБ</span>
+            </div>
+            <span style={{ color: '#fff', fontSize: 13, fontWeight: 700, letterSpacing: '0.12em' }}>СБЕРБАНК</span>
           </div>
-          <div>
-            <p className="text-white text-sm font-bold tracking-[0.12em] leading-none">СБЕРБАНК</p>
-            <p className="text-[#21A038] text-[9px] font-mono tracking-widest opacity-80 leading-none mt-0.5">POS TERMINAL</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-5">
-          <span className="text-[#2a5c35] text-[10px] font-mono">TRM-00847</span>
-          <span className="text-[#2a5c35] text-[10px] font-mono">{new Date().toLocaleDateString('ru-RU')}</span>
-          <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full animate-pulse"
-              style={{ background: '#21A038', boxShadow: '0 0 6px #21A038' }} />
-            <span className="text-[#21A038] text-[10px] font-mono font-bold">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+            <div style={{
+              width: 8, height: 8, borderRadius: '50%', background: '#21A038',
+              boxShadow: '0 0 6px #21A038', animation: 'pulse 2s infinite',
+            }} />
+            <span style={{ color: '#21A038', fontSize: 10, fontFamily: 'Roboto Mono,monospace', fontWeight: 700, letterSpacing: '0.1em' }}>
               {screen === 'amount' || screen === 'amount_ok' ? 'ГОТОВ' : screen === 'card' ? 'ОЖИДАНИЕ' : screen === 'processing' ? 'ОБРАБОТКА' : 'ОПЛАЧЕНО'}
             </span>
           </div>
         </div>
-      </div>
 
-      {/* КОНТЕНТ */}
-      <div className="flex-1 flex overflow-hidden min-h-0">
-
-        {/* ЛЕВАЯ — информация / статус */}
-        <div className="flex-1 flex flex-col items-center justify-center px-8 min-w-0">
-
-          {screen === 'amount' && (
-            <div className="w-full max-w-xs text-center">
-              <p className="text-[#2a5c35] text-[11px] font-mono tracking-[0.25em] uppercase mb-4">Сумма к оплате</p>
-              <div className="rounded-2xl py-5 px-6 text-right mb-4"
-                style={{ background: '#060f08', border: '1px solid rgba(33,160,56,0.25)', boxShadow: 'inset 0 2px 12px rgba(0,0,0,0.5)' }}>
-                <div className="flex items-end justify-end gap-2">
-                  <span className="text-white font-mono font-light tracking-wider" style={{ fontSize: 'clamp(26px,4.5vw,52px)' }}>
-                    {formatted}
-                  </span>
-                  <span className="text-[#21A038] font-mono font-bold mb-1" style={{ fontSize: 'clamp(16px,2.5vw,28px)' }}>₽</span>
-                </div>
-              </div>
-              <p className="text-[#1a3a1f] text-[10px] font-mono tracking-widest">ВВЕДИТЕ СУММУ → ОК</p>
-            </div>
-          )}
-
-          {screen === 'amount_ok' && (
-            <div className="flex flex-col items-center gap-5">
-              <div className="w-24 h-24 rounded-full flex items-center justify-center"
-                style={{ background: 'rgba(33,160,56,0.12)', border: '2px solid #21A038', boxShadow: '0 0 50px rgba(33,160,56,0.4)' }}>
-                <Icon name="Check" size={48} className="text-[#4ade80]" />
-              </div>
-              <p className="text-[#4ade80] text-xl font-mono font-bold tracking-widest">СУММА ПРИНЯТА</p>
-              <p className="text-white font-mono font-light" style={{ fontSize: 'clamp(24px,4vw,44px)' }}>{formatted} ₽</p>
-            </div>
-          )}
-
-          {screen === 'card' && (
-            <div className="flex flex-col items-center gap-6 w-full max-w-xs cursor-pointer" onClick={handleCardTap}>
-              <div className="text-center">
-                <p className="text-[#2a5c35] text-[11px] font-mono tracking-[0.2em] uppercase mb-2">К оплате</p>
-                <p className="text-white font-mono font-light" style={{ fontSize: 'clamp(28px,5vw,52px)' }}>
-                  {formatted} <span className="text-[#21A038] font-bold">₽</span>
-                </p>
-              </div>
-              <div className="flex flex-col items-center gap-4 py-7 px-10 rounded-3xl w-full active:opacity-80 transition-opacity"
-                style={{ background: 'rgba(0,0,0,0.25)', border: '2px dashed rgba(33,160,56,0.35)' }}>
-                <div className="relative w-20 h-20 flex items-center justify-center">
-                  <div className="absolute w-20 h-20 rounded-full animate-ping opacity-[0.07]" style={{ background: '#21A038' }} />
-                  <div className="absolute w-14 h-14 rounded-full animate-ping opacity-[0.12]" style={{ background: '#21A038', animationDelay: '0.5s' }} />
-                  <div className="w-16 h-16 rounded-full flex items-center justify-center z-10"
-                    style={{ background: 'rgba(33,160,56,0.15)', border: '2px solid rgba(33,160,56,0.5)', boxShadow: '0 0 24px rgba(33,160,56,0.3)' }}>
-                    <Icon name="Wifi" size={30} className="text-[#4ade80]" />
-                  </div>
-                </div>
-                <p className="text-white text-base font-sans font-medium">Приложите карту</p>
-                <p className="text-[#1a3a1f] text-[10px] font-mono tracking-widest">ИЛИ НАЖМИТЕ ЗДЕСЬ</p>
-              </div>
-            </div>
-          )}
-
-          {screen === 'processing' && (
-            <div className="flex flex-col items-center gap-6">
-              <div className="relative w-20 h-20">
-                <div className="absolute inset-0 rounded-full" style={{ border: '2px solid rgba(33,160,56,0.15)' }} />
-                <div className="absolute inset-0 rounded-full border-t-2 border-[#21A038] animate-spin"
-                  style={{ boxShadow: '0 0 10px rgba(33,160,56,0.4)' }} />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Icon name="Wifi" size={28} className="text-[#4ade80]" />
-                </div>
-              </div>
-              <div className="text-center">
-                <p className="text-white text-lg font-mono tracking-wider mb-1">Обработка...</p>
-                <p className="text-[#1a3a1f] text-[10px] font-mono tracking-widest">НЕ УБИРАЙТЕ КАРТУ</p>
-              </div>
-              <div className="w-56 rounded-full overflow-hidden"
-                style={{ height: 5, background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(33,160,56,0.15)' }}>
-                <div className="h-full rounded-full transition-all duration-75"
-                  style={{ width: `${progress}%`, background: 'linear-gradient(90deg,#0d6e25,#21A038,#4ade80)', boxShadow: '0 0 6px rgba(33,160,56,0.5)' }} />
-              </div>
-              <p className="text-[#4ade80] font-mono font-light" style={{ fontSize: 'clamp(24px,4vw,44px)' }}>{formatted} ₽</p>
-            </div>
-          )}
-
-          {screen === 'success' && (
-            <div className="flex flex-col items-center gap-5">
-              <div className="w-28 h-28 rounded-full flex items-center justify-center"
-                style={{ background: 'rgba(33,160,56,0.12)', border: '3px solid #21A038', boxShadow: '0 0 60px rgba(33,160,56,0.45), 0 0 120px rgba(33,160,56,0.15)' }}>
-                <Icon name="Check" size={56} className="text-[#4ade80]" />
-              </div>
-              <p className="text-[#4ade80] font-mono font-bold tracking-widest" style={{ fontSize: 'clamp(20px,3vw,34px)' }}>ОПЛАЧЕНО</p>
-              <p className="text-white font-mono font-light" style={{ fontSize: 'clamp(28px,4.5vw,52px)' }}>{formatted} ₽</p>
-              <p className="text-[#1a3a1f] text-[10px] font-mono tracking-widest mt-2">ВОЗВРАТ К НАЧАЛУ...</p>
-            </div>
-          )}
-        </div>
-
-        {/* РАЗДЕЛИТЕЛЬ */}
-        <div className="w-px my-6 flex-shrink-0"
-          style={{ background: 'linear-gradient(to bottom,transparent,rgba(33,160,56,0.25),transparent)' }} />
-
-        {/* ПРАВАЯ — клавиатура */}
-        <div className="w-72 flex-shrink-0 flex flex-col justify-center px-6 py-4 gap-2.5">
-          {screen === 'amount' && (
+        {/* Дисплей */}
+        <div style={{
+          margin: '14px 14px 0', borderRadius: 14, flexShrink: 0,
+          background: '#050e06', border: '1px solid rgba(33,160,56,0.2)',
+          boxShadow: 'inset 0 2px 14px rgba(0,0,0,0.7)',
+          padding: '14px 18px 12px',
+        }}>
+          {(screen === 'amount') && (
             <>
-              <div className="grid grid-cols-3 gap-2.5">
-                {['1','2','3','4','5','6','7','8','9'].map(k => (
-                  <button key={k} onClick={() => handleKey(k)}
-                    className="rounded-xl text-white font-mono font-semibold transition-all duration-75 active:scale-95"
-                    style={{
-                      height: 'clamp(50px,7vh,70px)',
-                      fontSize: 'clamp(18px,2.5vh,26px)',
-                      background: 'linear-gradient(180deg,rgba(255,255,255,0.06) 0%,rgba(255,255,255,0.02) 100%)',
-                      border: '1px solid rgba(33,160,56,0.18)',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)'
-                    }}>
-                    {k}
-                  </button>
-                ))}
+              <p style={{ color: '#2d6b3a', fontSize: 10, fontFamily: 'Roboto Mono,monospace', letterSpacing: '0.2em', marginBottom: 10 }}>
+                СУММА К ОПЛАТЕ
+              </p>
+              <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', gap: 8, minHeight: 54 }}>
+                <span style={{ color: '#fff', fontSize: 46, fontFamily: 'Roboto Mono,monospace', fontWeight: 300, lineHeight: 1 }}>
+                  {formatted}
+                </span>
+                <span style={{ color: '#21A038', fontSize: 26, fontFamily: 'Roboto Mono,monospace', fontWeight: 700, marginBottom: 4 }}>₽</span>
               </div>
-              <div className="grid grid-cols-3 gap-2.5">
-                <button onClick={handleClear}
-                  className="rounded-xl font-mono font-bold transition-all duration-75 active:scale-95"
-                  style={{
-                    height: 'clamp(50px,7vh,70px)',
-                    fontSize: 'clamp(11px,1.5vh,14px)',
-                    background: 'rgba(239,68,68,0.07)',
-                    border: '1px solid rgba(239,68,68,0.22)',
-                    color: '#f87171',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
-                  }}>
-                  СБР
-                </button>
-                <button onClick={() => handleKey('0')}
-                  className="rounded-xl text-white font-mono font-semibold transition-all duration-75 active:scale-95"
-                  style={{
-                    height: 'clamp(50px,7vh,70px)',
-                    fontSize: 'clamp(18px,2.5vh,26px)',
-                    background: 'linear-gradient(180deg,rgba(255,255,255,0.06) 0%,rgba(255,255,255,0.02) 100%)',
-                    border: '1px solid rgba(33,160,56,0.18)',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)'
-                  }}>
-                  0
-                </button>
-                <button onClick={handleDelete}
-                  className="rounded-xl flex items-center justify-center transition-all duration-75 active:scale-95"
-                  style={{
-                    height: 'clamp(50px,7vh,70px)',
-                    background: 'linear-gradient(180deg,rgba(255,255,255,0.06) 0%,rgba(255,255,255,0.02) 100%)',
-                    border: '1px solid rgba(33,160,56,0.18)',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.35)'
-                  }}>
-                  <Icon name="Delete" size={20} className="text-[#4b5563]" />
-                </button>
-              </div>
-              <div className="grid grid-cols-2 gap-2.5 mt-1">
-                <button onClick={handleCancel}
-                  className="rounded-xl font-mono font-bold tracking-widest transition-all duration-75 active:scale-95"
-                  style={{
-                    height: 'clamp(48px,6.5vh,66px)',
-                    fontSize: 'clamp(11px,1.5vh,13px)',
-                    background: 'rgba(239,68,68,0.09)',
-                    border: '1px solid rgba(239,68,68,0.3)',
-                    color: '#f87171',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
-                  }}>
-                  ОТМЕНА
-                </button>
-                <button onClick={handleOk}
-                  className="rounded-xl font-mono font-bold tracking-widest transition-all duration-75 active:scale-95"
-                  style={{
-                    height: 'clamp(48px,6.5vh,66px)',
-                    fontSize: 'clamp(11px,1.5vh,13px)',
-                    background: 'linear-gradient(135deg,rgba(33,160,56,0.28),rgba(13,110,37,0.28))',
-                    border: '1px solid rgba(33,160,56,0.48)',
-                    color: '#4ade80',
-                    boxShadow: '0 2px 12px rgba(33,160,56,0.18), inset 0 1px 0 rgba(33,160,56,0.12)'
-                  }}>
-                  ОК
-                </button>
-              </div>
+              <p style={{ color: '#152215', fontSize: 9, fontFamily: 'Roboto Mono,monospace', letterSpacing: '0.15em', marginTop: 8, textAlign: 'right' }}>
+                ВВЕДИТЕ СУММУ И НАЖМИТЕ ОК
+              </p>
             </>
           )}
-
+          {screen === 'amount_ok' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '4px 0' }}>
+              <Icon name="CheckCircle" size={36} className="text-[#4ade80]" />
+              <div>
+                <p style={{ color: '#4ade80', fontSize: 12, fontFamily: 'Roboto Mono,monospace', fontWeight: 700, letterSpacing: '0.15em' }}>СУММА ПРИНЯТА</p>
+                <p style={{ color: '#fff', fontSize: 30, fontFamily: 'Roboto Mono,monospace', fontWeight: 300 }}>{formatted} ₽</p>
+              </div>
+            </div>
+          )}
           {screen === 'card' && (
-            <button onClick={handleCancel}
-              className="w-full rounded-xl font-mono font-bold tracking-widest transition-all active:scale-95"
-              style={{
-                height: 'clamp(48px,6.5vh,66px)',
-                fontSize: 'clamp(11px,1.5vh,13px)',
-                background: 'rgba(239,68,68,0.09)',
-                border: '1px solid rgba(239,68,68,0.3)',
-                color: '#f87171'
-              }}>
-              ОТМЕНА
-            </button>
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ color: '#2d6b3a', fontSize: 10, fontFamily: 'Roboto Mono,monospace', letterSpacing: '0.2em', marginBottom: 6 }}>К ОПЛАТЕ</p>
+              <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', gap: 8 }}>
+                <span style={{ color: '#fff', fontSize: 42, fontFamily: 'Roboto Mono,monospace', fontWeight: 300, lineHeight: 1 }}>{formatted}</span>
+                <span style={{ color: '#21A038', fontSize: 24, fontFamily: 'Roboto Mono,monospace', fontWeight: 700, marginBottom: 4 }}>₽</span>
+              </div>
+            </div>
+          )}
+          {screen === 'processing' && (
+            <div>
+              <p style={{ color: '#2d6b3a', fontSize: 10, fontFamily: 'Roboto Mono,monospace', letterSpacing: '0.2em', marginBottom: 8 }}>ОБРАБОТКА ПЛАТЕЖА</p>
+              <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', gap: 8, marginBottom: 10 }}>
+                <span style={{ color: '#4ade80', fontSize: 38, fontFamily: 'Roboto Mono,monospace', fontWeight: 300, lineHeight: 1 }}>{formatted}</span>
+                <span style={{ color: '#21A038', fontSize: 22, fontFamily: 'Roboto Mono,monospace', fontWeight: 700, marginBottom: 3 }}>₽</span>
+              </div>
+              <div style={{ height: 5, borderRadius: 99, background: 'rgba(255,255,255,0.05)', overflow: 'hidden' }}>
+                <div style={{ height: '100%', borderRadius: 99, width: `${progress}%`, background: 'linear-gradient(90deg,#0d6e25,#4ade80)', transition: 'width 75ms linear' }} />
+              </div>
+            </div>
+          )}
+          {screen === 'success' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '4px 0' }}>
+              <Icon name="CheckCircle" size={40} className="text-[#4ade80]" />
+              <div>
+                <p style={{ color: '#4ade80', fontSize: 14, fontFamily: 'Roboto Mono,monospace', fontWeight: 700, letterSpacing: '0.15em' }}>ОПЛАЧЕНО</p>
+                <p style={{ color: '#fff', fontSize: 30, fontFamily: 'Roboto Mono,monospace', fontWeight: 300 }}>{formatted} ₽</p>
+              </div>
+            </div>
           )}
         </div>
-      </div>
 
-      {/* ПОДВАЛ */}
-      <div className="flex items-center justify-between px-6 py-2 flex-shrink-0"
-        style={{ background: '#0a1a0d', borderTop: '1px solid rgba(33,160,56,0.2)' }}>
-        <div className="flex items-center gap-4">
-          {['VISA', 'MC', 'МИР', 'NFC'].map(s => (
-            <span key={s} className="font-mono px-2 py-0.5 rounded text-[9px] tracking-wider"
-              style={{ color: '#1a3a22', border: '1px solid rgba(33,160,56,0.12)' }}>{s}</span>
+        {/* Центральная зона */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '12px 14px 0' }}>
+          {screen === 'card' && (
+            <div onClick={handleCardTap} style={{ cursor: 'pointer', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14,
+              padding: '20px 0', borderRadius: 18, background: 'rgba(0,0,0,0.2)', border: '2px dashed rgba(33,160,56,0.3)' }}>
+              <div style={{ position: 'relative', width: 80, height: 80, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div className="animate-ping" style={{ position: 'absolute', width: 80, height: 80, borderRadius: '50%', background: '#21A038', opacity: 0.07 }} />
+                <div className="animate-ping" style={{ position: 'absolute', width: 56, height: 56, borderRadius: '50%', background: '#21A038', opacity: 0.12, animationDelay: '0.5s' }} />
+                <div style={{ width: 68, height: 68, borderRadius: '50%', background: 'rgba(33,160,56,0.13)', border: '2px solid rgba(33,160,56,0.5)', boxShadow: '0 0 24px rgba(33,160,56,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
+                  <Icon name="Wifi" size={30} className="text-[#4ade80]" />
+                </div>
+              </div>
+              <p style={{ color: '#fff', fontSize: 15, fontWeight: 500 }}>Приложите карту</p>
+              <p style={{ color: '#1a3a1f', fontSize: 9, fontFamily: 'Roboto Mono,monospace', letterSpacing: '0.15em' }}>ИЛИ НАЖМИТЕ ЗДЕСЬ</p>
+            </div>
+          )}
+          {screen === 'processing' && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+              <div style={{ position: 'relative', width: 60, height: 60 }}>
+                <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '2px solid rgba(33,160,56,0.15)' }} />
+                <div className="animate-spin" style={{ position: 'absolute', inset: 0, borderRadius: '50%', borderTop: '2px solid #21A038' }} />
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon name="Wifi" size={22} className="text-[#4ade80]" />
+                </div>
+              </div>
+              <p style={{ color: '#1a3a1f', fontSize: 9, fontFamily: 'Roboto Mono,monospace', letterSpacing: '0.15em' }}>НЕ УБИРАЙТЕ КАРТУ</p>
+            </div>
+          )}
+        </div>
+
+        {/* Клавиатура */}
+        {screen === 'amount' && (
+          <div style={{ padding: '8px 14px 10px', display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+              {['1','2','3','4','5','6','7','8','9'].map(k => (
+                <button key={k} onClick={() => handleKey(k)} style={btnBase}>{k}</button>
+              ))}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+              <button onClick={handleClear} style={{ ...btnBase, fontSize: 13, background: 'rgba(239,68,68,0.09)', border: '1px solid rgba(239,68,68,0.28)', color: '#f87171' }}>СБР</button>
+              <button onClick={() => handleKey('0')} style={btnBase}>0</button>
+              <button onClick={handleDelete} style={{ ...btnBase, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Icon name="Delete" size={22} className="text-[#4b5563]" />
+              </button>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 2 }}>
+              <button onClick={handleCancel} style={{ ...btnBase, height: 56, fontSize: 13, letterSpacing: '0.1em', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.38)', color: '#f87171' }}>ОТМЕНА</button>
+              <button onClick={handleOk} style={{ ...btnBase, height: 56, fontSize: 13, letterSpacing: '0.1em', background: 'linear-gradient(135deg,rgba(33,160,56,0.28),rgba(13,110,37,0.28))', border: '1px solid rgba(33,160,56,0.52)', color: '#4ade80', boxShadow: '0 2px 14px rgba(33,160,56,0.18)' }}>ОК</button>
+            </div>
+          </div>
+        )}
+
+        {screen === 'card' && (
+          <div style={{ padding: '8px 14px 10px', flexShrink: 0 }}>
+            <button onClick={handleCancel} style={{ ...btnBase, width: '100%', height: 52, fontSize: 13, letterSpacing: '0.1em', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.38)', color: '#f87171' }}>ОТМЕНА</button>
+          </div>
+        )}
+
+        {/* Слот карты */}
+        <div style={{ margin: '4px 16px 6px', flexShrink: 0 }}>
+          <div style={{ height: 14, borderRadius: 6, background: '#090909', border: '1px solid rgba(255,255,255,0.05)', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', padding: '0 8px', gap: 4 }}>
+              {Array.from({ length: 26 }).map((_, i) => <div key={i} style={{ width: 1, height: 8, background: '#181818', flexShrink: 0 }} />)}
+            </div>
+            <span style={{ color: '#1f1f1f', fontSize: 7, fontFamily: 'Roboto Mono,monospace', background: '#090909', padding: '0 4px', position: 'relative', zIndex: 1, letterSpacing: '0.2em' }}>КАРТА</span>
+          </div>
+          {screen === 'card' && (
+            <div className="animate-pulse" style={{ height: 2, marginTop: 2, borderRadius: 99, background: 'linear-gradient(90deg,transparent,#21A038,transparent)' }} />
+          )}
+        </div>
+
+        {/* Логотипы */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, paddingBottom: 10, flexShrink: 0 }}>
+          {['VISA','MC','МИР','NFC'].map(s => (
+            <span key={s} style={{ color: '#1c3520', fontSize: 8, fontFamily: 'Roboto Mono,monospace', padding: '2px 6px', borderRadius: 4, border: '1px solid rgba(33,160,56,0.1)', letterSpacing: '0.1em' }}>{s}</span>
           ))}
         </div>
-        <div className="flex items-center gap-2">
-          <Icon name="Shield" size={11} className="text-[#1a3a22]" />
-          <span className="text-[#1a3a22] text-[9px] font-mono tracking-widest">ЗАЩИЩЁННОЕ СОЕДИНЕНИЕ</span>
-        </div>
-        <span className="text-[#1a3a22] text-[9px] font-mono tracking-widest">© СБЕРБАНК · v2.4.1</span>
       </div>
     </div>
   );
