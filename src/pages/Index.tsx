@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import Icon from '@/components/ui/icon';
 
 type Screen = 'amount' | 'amount_ok' | 'card' | 'processing' | 'success';
@@ -23,7 +23,7 @@ function useSound() {
     osc.stop(ac.currentTime + duration);
   }, []);
 
-  const keyBeep = useCallback(() => beep(880, 0.07, 'square', 0.15), [beep]);
+  const keyBeep = useCallback(() => beep(880, 0.06, 'square', 0.12), [beep]);
   const okBeep = useCallback(() => {
     beep(660, 0.1, 'sine', 0.2);
     setTimeout(() => beep(880, 0.15, 'sine', 0.25), 110);
@@ -46,69 +46,19 @@ function formatAmount(raw: string) {
   return (parseInt(raw, 10) / 100).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function Header({ label, status, color }: { label: string; status: string; color: string }) {
-  return (
-    <div className="px-4 py-2.5 flex items-center justify-between border-b border-white/5"
-      style={{ background: 'rgba(0,0,0,0.4)' }}>
-      <span className="text-[#4ade80] text-xs font-mono tracking-wider font-bold">СБЕРБАНК</span>
-      <div className="flex items-center gap-1.5">
-        <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: color }} />
-        <span className="text-xs font-mono" style={{ color }}>{status}</span>
-      </div>
-    </div>
-  );
+function now() {
+  return new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
 
-function NumPad({ onKey, onDelete, onClear, onConfirm, onCancel }: {
-  onKey: (k: string) => void; onDelete: () => void; onClear: () => void;
-  onConfirm: () => void; onCancel: () => void;
-}) {
-  return (
-    <div className="bg-[#06080f] border-t border-white/5 p-3">
-      <div className="grid grid-cols-3 gap-2 mb-2">
-        {['1','2','3','4','5','6','7','8','9'].map(k => (
-          <button key={k} onClick={() => onKey(k)}
-            className="h-11 rounded-lg text-white font-mono text-lg font-semibold transition-all active:scale-95 select-none"
-            style={{ background: 'linear-gradient(180deg, #1a2535 0%, #0f1820 100%)', border: '1px solid rgba(255,255,255,0.08)' }}>
-            {k}
-          </button>
-        ))}
-        <button onClick={onClear}
-          className="h-11 rounded-lg text-[#6b7280] font-mono text-[10px] transition-all active:scale-95 select-none"
-          style={{ background: 'linear-gradient(180deg, #1a2535 0%, #0f1820 100%)', border: '1px solid rgba(255,255,255,0.08)' }}>
-          СБР
-        </button>
-        <button onClick={() => onKey('0')}
-          className="h-11 rounded-lg text-white font-mono text-lg font-semibold transition-all active:scale-95 select-none"
-          style={{ background: 'linear-gradient(180deg, #1a2535 0%, #0f1820 100%)', border: '1px solid rgba(255,255,255,0.08)' }}>
-          0
-        </button>
-        <button onClick={onDelete}
-          className="h-11 rounded-lg flex items-center justify-center transition-all active:scale-95 select-none"
-          style={{ background: 'linear-gradient(180deg, #1a2535 0%, #0f1820 100%)', border: '1px solid rgba(255,255,255,0.08)' }}>
-          <Icon name="Delete" size={18} className="text-[#6b7280]" />
-        </button>
-      </div>
-      <div className="grid grid-cols-2 gap-2">
-        <button onClick={onCancel}
-          className="h-11 rounded-lg font-mono text-xs font-bold transition-all active:scale-95 select-none"
-          style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444' }}>
-          ОТМЕНА
-        </button>
-        <button onClick={onConfirm}
-          className="h-11 rounded-lg font-mono text-xs font-bold transition-all active:scale-95 select-none"
-          style={{ background: 'rgba(33,160,56,0.2)', border: '1px solid rgba(33,160,56,0.5)', color: '#4ade80' }}>
-          ОК
-        </button>
-      </div>
-    </div>
-  );
+function nowDate() {
+  return new Date().toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
 export default function Index() {
   const [screen, setScreen] = useState<Screen>('amount');
   const [amount, setAmount] = useState('');
   const [progress, setProgress] = useState(0);
+  const [time] = useState(now());
   const { keyBeep, okBeep, cardBeep, successSound } = useSound();
 
   const formatted = formatAmount(amount);
@@ -126,7 +76,7 @@ export default function Index() {
     if (!amount || parseInt(amount) === 0) return;
     okBeep();
     setScreen('amount_ok');
-    setTimeout(() => setScreen('card'), 1200);
+    setTimeout(() => setScreen('card'), 1400);
   };
 
   const handleCancel = () => {
@@ -140,14 +90,12 @@ export default function Index() {
     cardBeep();
     setScreen('processing');
     setProgress(0);
-
     const interval = setInterval(() => {
       setProgress(prev => {
         if (prev >= 100) { clearInterval(interval); return 100; }
-        return prev + 8;
+        return prev + 7;
       });
     }, 80);
-
     setTimeout(() => {
       clearInterval(interval);
       setProgress(100);
@@ -157,215 +105,309 @@ export default function Index() {
         setAmount('');
         setProgress(0);
         setScreen('amount');
-      }, 2500);
-    }, 1300);
+      }, 2800);
+    }, 1400);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 font-sans"
-      style={{ background: 'radial-gradient(ellipse at 50% 30%, #0d1f0d 0%, #070a07 60%, #040604 100%)' }}>
-      <div className="flex flex-col items-center gap-5">
+    <div className="fixed inset-0 flex flex-col font-sans overflow-hidden"
+      style={{ background: 'linear-gradient(160deg, #1a4a26 0%, #0f2d18 30%, #082010 60%, #051509 100%)' }}>
 
-        {/* Терминал */}
-        <div className="relative w-72"
-          style={{ filter: 'drop-shadow(0 40px 80px rgba(0,0,0,0.9)) drop-shadow(0 0 40px rgba(33,160,56,0.08))' }}>
-
-          {/* Корпус */}
-          <div className="rounded-[28px] p-1.5 overflow-hidden"
-            style={{
-              background: 'linear-gradient(160deg, #343434 0%, #202020 40%, #141414 100%)',
-              boxShadow: '0 0 0 1px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.08)'
-            }}>
-
-            {/* Шапка с логотипом */}
-            <div className="flex items-center justify-between px-4 py-2.5 mb-0.5">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full flex items-center justify-center"
-                  style={{ background: 'linear-gradient(135deg, #21A038, #0d7a2a)' }}>
-                  <span className="text-white text-[8px] font-bold">СБ</span>
-                </div>
-                <span className="text-white text-xs font-bold tracking-widest">СБЕРБАНК</span>
-              </div>
-              <div className="flex gap-1.5">
-                <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#21A038', boxShadow: '0 0 4px #21A038' }} />
-                <div className="w-1.5 h-1.5 rounded-full bg-[#21A038] opacity-40" />
-                <div className="w-1.5 h-1.5 rounded-full bg-[#21A038] opacity-15" />
-              </div>
-            </div>
-
-            {/* Экран */}
-            <div className="rounded-xl overflow-hidden"
-              style={{ boxShadow: 'inset 0 2px 12px rgba(0,0,0,0.9), 0 0 0 1px rgba(0,0,0,0.6)' }}>
-              <div className="bg-[#080d12]" style={{ height: 400 }}>
-
-                {/* === ЭКРАН: ВВОД СУММЫ === */}
-                {screen === 'amount' && (
-                  <div className="flex flex-col h-full">
-                    <Header label="СБЕРБАНК" status="ГОТОВ" color="#4ade80" />
-                    <div className="flex-1 flex flex-col items-center justify-center px-5 bg-[#080d12]">
-                      <p className="text-[#4b5563] text-[10px] font-mono tracking-[0.2em] uppercase mb-3">Сумма оплаты</p>
-                      <div className="w-full rounded-xl px-4 py-4 mb-2 flex items-center justify-end gap-2"
-                        style={{ background: '#04080f', border: '1px solid rgba(30,58,95,0.6)' }}>
-                        <span className="text-white text-3xl font-mono font-light tracking-wider">{formatted}</span>
-                        <span className="text-[#21A038] text-lg font-mono font-bold">₽</span>
-                      </div>
-                      <p className="text-[#1f2937] text-[10px] font-mono mt-2">Введите сумму → ОК</p>
-                    </div>
-                    <NumPad onKey={handleKey} onDelete={handleDelete} onClear={handleClear} onConfirm={handleOk} onCancel={handleCancel} />
-                  </div>
-                )}
-
-                {/* === ЭКРАН: ГАЛОЧКА ОК === */}
-                {screen === 'amount_ok' && (
-                  <div className="flex flex-col h-full items-center justify-center bg-[#080d12] gap-4">
-                    <div className="w-20 h-20 rounded-full flex items-center justify-center"
-                      style={{ background: 'rgba(33,160,56,0.15)', border: '2px solid #21A038', boxShadow: '0 0 30px rgba(33,160,56,0.3)' }}>
-                      <Icon name="Check" size={38} className="text-[#4ade80]" />
-                    </div>
-                    <p className="text-[#4ade80] text-sm font-mono font-semibold tracking-wider">СУММА ПРИНЯТА</p>
-                    <p className="text-white text-2xl font-mono font-light">{formatted} ₽</p>
-                  </div>
-                )}
-
-                {/* === ЭКРАН: ПРИЛОЖИТЕ КАРТУ === */}
-                {screen === 'card' && (
-                  <div className="flex flex-col h-full">
-                    <Header label="СБЕРБАНК" status="ОЖИДАНИЕ" color="#facc15" />
-                    <div
-                      className="flex-1 flex flex-col items-center justify-center gap-5 cursor-pointer select-none relative overflow-hidden"
-                      style={{ background: '#080d12' }}
-                      onClick={handleCardTap}>
-
-                      {/* Пульсирующий фон при касании */}
-                      <div className="absolute inset-0 rounded-xl transition-all duration-150 active:bg-white/5" />
-
-                      <div className="text-center">
-                        <p className="text-[#6b7280] text-[10px] font-mono tracking-[0.2em] uppercase mb-1">К оплате</p>
-                        <p className="text-[#4ade80] text-3xl font-mono font-semibold">{formatted} ₽</p>
-                      </div>
-
-                      <div className="flex flex-col items-center gap-4">
-                        {/* NFC иконка с пульсацией */}
-                        <div className="relative flex items-center justify-center w-24 h-24">
-                          <div className="absolute w-24 h-24 rounded-full animate-ping opacity-10"
-                            style={{ background: '#21A038' }} />
-                          <div className="absolute w-16 h-16 rounded-full animate-ping opacity-20"
-                            style={{ background: '#21A038', animationDelay: '0.3s' }} />
-                          <div className="w-16 h-16 rounded-full flex items-center justify-center relative z-10"
-                            style={{ background: 'rgba(33,160,56,0.15)', border: '2px solid rgba(33,160,56,0.4)' }}>
-                            <Icon name="Wifi" size={28} className="text-[#4ade80]" />
-                          </div>
-                        </div>
-
-                        <div className="text-center">
-                          <p className="text-white text-sm font-sans font-medium mb-0.5">Приложите карту</p>
-                          <p className="text-[#374151] text-[10px] font-mono">или нажмите на экран</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="px-4 py-3 border-t border-white/5 bg-[#06080f]">
-                      <button onClick={handleCancel}
-                        className="w-full py-2 text-[10px] font-mono rounded-lg transition-all"
-                        style={{ color: '#ef4444', border: '1px solid rgba(239,68,68,0.25)', background: 'rgba(239,68,68,0.05)' }}>
-                        ОТМЕНА
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* === ЭКРАН: ОБРАБОТКА === */}
-                {screen === 'processing' && (
-                  <div className="flex flex-col h-full items-center justify-center bg-[#080d12] gap-6 px-6">
-                    <div className="relative w-16 h-16">
-                      <div className="absolute inset-0 rounded-full border-2 border-[#1e3a5f]" />
-                      <div className="absolute inset-0 rounded-full border-t-2 border-[#21A038] animate-spin" />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <Icon name="Wifi" size={22} className="text-[#4ade80]" />
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-white text-sm font-mono mb-1">Обработка...</p>
-                      <p className="text-[#374151] text-[10px] font-mono">Не убирайте карту</p>
-                    </div>
-                    <div className="w-full rounded-full overflow-hidden h-1.5"
-                      style={{ background: '#0a1628', border: '1px solid rgba(30,58,95,0.5)' }}>
-                      <div className="h-full rounded-full transition-all duration-100"
-                        style={{ width: `${progress}%`, background: 'linear-gradient(90deg, #21A038, #4ade80)' }} />
-                    </div>
-                    <p className="text-[#4ade80] text-2xl font-mono">{formatted} ₽</p>
-                  </div>
-                )}
-
-                {/* === ЭКРАН: УСПЕХ === */}
-                {screen === 'success' && (
-                  <div className="flex flex-col h-full items-center justify-center bg-[#080d12] gap-4 px-6">
-                    <div className="w-24 h-24 rounded-full flex items-center justify-center"
-                      style={{
-                        background: 'rgba(33,160,56,0.15)',
-                        border: '2px solid #21A038',
-                        boxShadow: '0 0 40px rgba(33,160,56,0.4), 0 0 80px rgba(33,160,56,0.15)'
-                      }}>
-                      <Icon name="Check" size={44} className="text-[#4ade80]" />
-                    </div>
-                    <div className="text-center">
-                      <p className="text-[#4ade80] text-xl font-mono font-bold tracking-widest mb-1">ОПЛАЧЕНО</p>
-                      <p className="text-[#6b7280] text-[10px] font-mono">Платёж успешно проведён</p>
-                    </div>
-                    <p className="text-white text-2xl font-mono font-light">{formatted} ₽</p>
-                    <p className="text-[#1f2937] text-[10px] font-mono">Возврат к началу...</p>
-                  </div>
-                )}
-
-              </div>
-            </div>
-
-            {/* Слот карты */}
-            <div className="mx-4 mt-2.5">
-              <div className="h-5 rounded flex items-center justify-center relative overflow-hidden"
-                style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.7)' }}>
-                <div className="absolute inset-0 flex items-center px-2 gap-0.5">
-                  {[...Array(30)].map((_, i) => (
-                    <div key={i} className="w-px flex-shrink-0 h-2.5 bg-[#181818]" />
-                  ))}
-                </div>
-                <span className="text-[#2a2a2a] text-[8px] font-mono relative z-10 bg-[#0a0a0a] px-1 tracking-wider">КАРТА</span>
-              </div>
-              {screen === 'card' && (
-                <div className="h-0.5 rounded-full mt-0.5 animate-pulse" style={{ background: 'linear-gradient(90deg, transparent, #21A038, transparent)' }} />
-              )}
-            </div>
-
-            {/* Индикаторы */}
-            <div className="flex items-center justify-center gap-3 py-2.5">
-              <div className="w-2 h-2 rounded-full transition-all duration-500"
-                style={{
-                  background: screen === 'success' ? '#21A038' : screen === 'processing' ? '#60a5fa' : '#21A038',
-                  boxShadow: screen === 'success' ? '0 0 8px #21A038' : screen === 'processing' ? '0 0 8px #60a5fa' : '0 0 4px #21A038'
-                }} />
-              <span className="text-[#1f2937] text-[7px] font-mono tracking-widest">POS-TERMINAL</span>
-              <div className="w-2 h-2 rounded-full transition-all duration-500"
-                style={{
-                  background: screen === 'card' ? '#facc15' : '#111',
-                  boxShadow: screen === 'card' ? '0 0 8px #facc15' : 'none'
-                }} />
-            </div>
-
-            {/* Логотипы платёжных систем */}
-            <div className="flex items-center justify-center gap-2 pb-2.5">
-              {['VISA', 'MC', 'МИР', 'NFC'].map(s => (
-                <span key={s} className="text-[#252525] text-[7px] font-mono px-1.5 py-0.5 rounded"
-                  style={{ border: '1px solid #1f1f1f' }}>{s}</span>
-              ))}
-            </div>
+      {/* ── ШАПКА ── */}
+      <div className="flex items-center justify-between px-8 py-4 flex-shrink-0"
+        style={{ background: 'rgba(0,0,0,0.35)', borderBottom: '1px solid rgba(33,160,56,0.25)' }}>
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-full flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg, #21A038 0%, #0d7a2a 100%)', boxShadow: '0 0 16px rgba(33,160,56,0.5)' }}>
+            <span className="text-white text-sm font-black">СБ</span>
           </div>
-
-          <div className="mx-10 h-3 bg-black/50 rounded-full blur-md mt-1" />
+          <div>
+            <p className="text-white text-lg font-bold tracking-[0.15em]">СБЕРБАНК</p>
+            <p className="text-[#4ade80] text-[10px] font-mono tracking-widest opacity-70">ПЛАТЁЖНЫЙ ТЕРМИНАЛ</p>
+          </div>
         </div>
 
-        <p className="text-[#1f2937] text-[10px] font-mono tracking-widest text-center">
-          СБЕРБАНК · POS TERMINAL · TRM-00847
-        </p>
+        <div className="flex items-center gap-8">
+          <div className="text-right">
+            <p className="text-[#4ade80] text-xs font-mono opacity-60">ТЕРМИНАЛ</p>
+            <p className="text-white text-sm font-mono font-bold">TRM-00847</p>
+          </div>
+          <div className="text-right">
+            <p className="text-[#4ade80] text-xs font-mono opacity-60">ДАТА</p>
+            <p className="text-white text-sm font-mono">{nowDate()}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-[#4ade80] text-xs font-mono opacity-60">ВРЕМЯ</p>
+            <p className="text-white text-sm font-mono font-bold">{time}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-2.5 h-2.5 rounded-full animate-pulse"
+              style={{ background: screen === 'success' ? '#4ade80' : '#21A038', boxShadow: '0 0 8px #21A038' }} />
+            <span className="text-[#4ade80] text-xs font-mono font-bold tracking-wider">
+              {screen === 'amount' || screen === 'amount_ok' ? 'ГОТОВ'
+                : screen === 'card' ? 'ОЖИДАНИЕ'
+                : screen === 'processing' ? 'ОБРАБОТКА'
+                : 'ОПЛАЧЕНО'}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── ОСНОВНАЯ ОБЛАСТЬ ── */}
+      <div className="flex-1 flex overflow-hidden">
+
+        {/* Левая панель — экран */}
+        <div className="flex-1 flex flex-col items-center justify-center px-12 py-8">
+
+          {/* ── ВВОД СУММЫ ── */}
+          {screen === 'amount' && (
+            <div className="w-full max-w-sm flex flex-col gap-6 animate-slide-up">
+              <div className="text-center">
+                <p className="text-[#4ade80] text-xs font-mono tracking-[0.3em] uppercase opacity-70 mb-1">Сумма к оплате</p>
+                <div className="rounded-2xl px-8 py-6 text-right relative overflow-hidden"
+                  style={{ background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(33,160,56,0.3)', boxShadow: 'inset 0 2px 16px rgba(0,0,0,0.6)' }}>
+                  <div className="absolute top-0 left-0 right-0 h-px"
+                    style={{ background: 'linear-gradient(90deg, transparent, rgba(33,160,56,0.6), transparent)' }} />
+                  <div className="flex items-end justify-end gap-3">
+                    <span className="text-5xl font-mono font-light text-white tracking-wider">{formatted}</span>
+                    <span className="text-2xl font-mono text-[#21A038] font-bold mb-1">₽</span>
+                  </div>
+                  {amount && (
+                    <p className="text-[#4ade80] text-xs font-mono opacity-50 mt-1 text-right">
+                      {(parseInt(amount) / 100).toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' })}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <p className="text-center text-[#2d5a3a] text-xs font-mono tracking-widest">ВВЕДИТЕ СУММУ И НАЖМИТЕ ОК</p>
+            </div>
+          )}
+
+          {/* ── ГАЛОЧКА ПРИНЯТО ── */}
+          {screen === 'amount_ok' && (
+            <div className="flex flex-col items-center gap-6 animate-slide-up">
+              <div className="w-28 h-28 rounded-full flex items-center justify-center"
+                style={{
+                  background: 'rgba(33,160,56,0.15)',
+                  border: '3px solid #21A038',
+                  boxShadow: '0 0 60px rgba(33,160,56,0.4), 0 0 120px rgba(33,160,56,0.15)'
+                }}>
+                <Icon name="Check" size={56} className="text-[#4ade80]" />
+              </div>
+              <div className="text-center">
+                <p className="text-[#4ade80] text-2xl font-mono font-bold tracking-widest mb-2">СУММА ПРИНЯТА</p>
+                <p className="text-white text-4xl font-mono font-light">{formatted} ₽</p>
+              </div>
+            </div>
+          )}
+
+          {/* ── ПРИЛОЖИТЕ КАРТУ ── */}
+          {screen === 'card' && (
+            <div className="flex flex-col items-center gap-8 animate-slide-up w-full max-w-sm">
+              <div className="text-center">
+                <p className="text-[#4ade80] text-xs font-mono tracking-[0.25em] opacity-70 mb-2 uppercase">К оплате</p>
+                <p className="text-white text-5xl font-mono font-light">{formatted} <span className="text-[#21A038] font-bold">₽</span></p>
+              </div>
+
+              <div
+                className="flex flex-col items-center gap-5 cursor-pointer select-none w-full py-10 rounded-3xl transition-all duration-150 active:scale-[0.98]"
+                style={{
+                  background: 'rgba(0,0,0,0.3)',
+                  border: '2px dashed rgba(33,160,56,0.4)',
+                  boxShadow: '0 0 40px rgba(33,160,56,0.08)'
+                }}
+                onClick={handleCardTap}>
+
+                <div className="relative flex items-center justify-center w-32 h-32">
+                  <div className="absolute w-32 h-32 rounded-full animate-ping opacity-[0.08]"
+                    style={{ background: '#21A038' }} />
+                  <div className="absolute w-24 h-24 rounded-full animate-ping opacity-[0.12]"
+                    style={{ background: '#21A038', animationDelay: '0.4s' }} />
+                  <div className="absolute w-16 h-16 rounded-full animate-ping opacity-[0.18]"
+                    style={{ background: '#21A038', animationDelay: '0.8s' }} />
+                  <div className="w-20 h-20 rounded-full flex items-center justify-center relative z-10"
+                    style={{
+                      background: 'rgba(33,160,56,0.15)',
+                      border: '2px solid rgba(33,160,56,0.6)',
+                      boxShadow: '0 0 30px rgba(33,160,56,0.3)'
+                    }}>
+                    <Icon name="Wifi" size={36} className="text-[#4ade80]" />
+                  </div>
+                </div>
+
+                <div className="text-center">
+                  <p className="text-white text-lg font-sans font-medium mb-1">Приложите карту к экрану</p>
+                  <p className="text-[#2d5a3a] text-xs font-mono tracking-wider">ИЛИ НАЖМИТЕ ЗДЕСЬ</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── ОБРАБОТКА ── */}
+          {screen === 'processing' && (
+            <div className="flex flex-col items-center gap-8 animate-slide-up">
+              <div className="relative w-24 h-24">
+                <div className="absolute inset-0 rounded-full"
+                  style={{ border: '2px solid rgba(33,160,56,0.2)' }} />
+                <div className="absolute inset-0 rounded-full border-t-2 border-[#21A038] animate-spin"
+                  style={{ boxShadow: '0 0 12px rgba(33,160,56,0.5)' }} />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Icon name="Wifi" size={32} className="text-[#4ade80]" />
+                </div>
+              </div>
+              <div className="text-center">
+                <p className="text-white text-xl font-mono mb-2 tracking-wider">Обработка платежа</p>
+                <p className="text-[#2d5a3a] text-xs font-mono tracking-widest">НЕ УБИРАЙТЕ КАРТУ...</p>
+              </div>
+              <div className="w-64 rounded-full overflow-hidden"
+                style={{ height: 6, background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(33,160,56,0.2)' }}>
+                <div className="h-full rounded-full transition-all duration-100"
+                  style={{
+                    width: `${progress}%`,
+                    background: 'linear-gradient(90deg, #0d7a2a, #21A038, #4ade80)',
+                    boxShadow: '0 0 8px rgba(33,160,56,0.6)'
+                  }} />
+              </div>
+              <p className="text-[#4ade80] text-4xl font-mono font-light">{formatted} ₽</p>
+            </div>
+          )}
+
+          {/* ── УСПЕХ ── */}
+          {screen === 'success' && (
+            <div className="flex flex-col items-center gap-6 animate-slide-up">
+              <div className="w-32 h-32 rounded-full flex items-center justify-center"
+                style={{
+                  background: 'rgba(33,160,56,0.15)',
+                  border: '3px solid #21A038',
+                  boxShadow: '0 0 60px rgba(33,160,56,0.5), 0 0 120px rgba(33,160,56,0.2)'
+                }}>
+                <Icon name="Check" size={60} className="text-[#4ade80]" />
+              </div>
+              <div className="text-center">
+                <p className="text-[#4ade80] text-3xl font-mono font-bold tracking-widest mb-2">ОПЛАЧЕНО</p>
+                <p className="text-white text-5xl font-mono font-light mb-4">{formatted} ₽</p>
+                <p className="text-[#2d5a3a] text-xs font-mono tracking-widest">ВОЗВРАТ К НАЧАЛУ...</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Разделитель */}
+        <div className="w-px flex-shrink-0 my-8"
+          style={{ background: 'linear-gradient(to bottom, transparent, rgba(33,160,56,0.3), transparent)' }} />
+
+        {/* Правая панель — клавиатура (только на экране ввода суммы) */}
+        <div className="w-80 flex-shrink-0 flex flex-col justify-center px-8 py-8 gap-3">
+          {(screen === 'amount') ? (
+            <>
+              {/* Цифры 1–9 */}
+              <div className="grid grid-cols-3 gap-3">
+                {['1','2','3','4','5','6','7','8','9'].map(k => (
+                  <button key={k} onClick={() => handleKey(k)}
+                    className="h-16 rounded-xl text-white font-mono text-2xl font-semibold transition-all duration-100 active:scale-95 select-none"
+                    style={{
+                      background: 'linear-gradient(180deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.03) 100%)',
+                      border: '1px solid rgba(33,160,56,0.2)',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06)'
+                    }}>
+                    {k}
+                  </button>
+                ))}
+              </div>
+
+              {/* Нижний ряд */}
+              <div className="grid grid-cols-3 gap-3">
+                <button onClick={handleClear}
+                  className="h-16 rounded-xl font-mono text-sm font-bold transition-all duration-100 active:scale-95 select-none"
+                  style={{
+                    background: 'rgba(239,68,68,0.08)',
+                    border: '1px solid rgba(239,68,68,0.2)',
+                    color: '#ef4444',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
+                  }}>
+                  СБР
+                </button>
+                <button onClick={() => handleKey('0')}
+                  className="h-16 rounded-xl text-white font-mono text-2xl font-semibold transition-all duration-100 active:scale-95 select-none"
+                  style={{
+                    background: 'linear-gradient(180deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.03) 100%)',
+                    border: '1px solid rgba(33,160,56,0.2)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06)'
+                  }}>
+                  0
+                </button>
+                <button onClick={handleDelete}
+                  className="h-16 rounded-xl flex items-center justify-center transition-all duration-100 active:scale-95 select-none"
+                  style={{
+                    background: 'linear-gradient(180deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.03) 100%)',
+                    border: '1px solid rgba(33,160,56,0.2)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
+                  }}>
+                  <Icon name="Delete" size={22} className="text-[#6b7280]" />
+                </button>
+              </div>
+
+              {/* ОТМЕНА / ОК */}
+              <div className="grid grid-cols-2 gap-3 mt-1">
+                <button onClick={handleCancel}
+                  className="h-14 rounded-xl font-mono text-sm font-bold tracking-widest transition-all duration-100 active:scale-95 select-none"
+                  style={{
+                    background: 'rgba(239,68,68,0.1)',
+                    border: '1px solid rgba(239,68,68,0.35)',
+                    color: '#ef4444',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
+                  }}>
+                  ОТМЕНА
+                </button>
+                <button onClick={handleOk}
+                  className="h-14 rounded-xl font-mono text-sm font-bold tracking-widest transition-all duration-100 active:scale-95 select-none"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(33,160,56,0.3), rgba(13,122,42,0.3))',
+                    border: '1px solid rgba(33,160,56,0.5)',
+                    color: '#4ade80',
+                    boxShadow: '0 2px 12px rgba(33,160,56,0.2), inset 0 1px 0 rgba(33,160,56,0.15)'
+                  }}>
+                  ОК
+                </button>
+              </div>
+            </>
+          ) : (
+            /* На остальных экранах — кнопка отмены если нужна */
+            (screen === 'card') && (
+              <div className="flex flex-col items-center gap-4">
+                <button onClick={handleCancel}
+                  className="w-full h-14 rounded-xl font-mono text-sm font-bold tracking-widest transition-all active:scale-95 select-none"
+                  style={{
+                    background: 'rgba(239,68,68,0.1)',
+                    border: '1px solid rgba(239,68,68,0.35)',
+                    color: '#ef4444'
+                  }}>
+                  ОТМЕНА
+                </button>
+                <p className="text-[#1a3a22] text-xs font-mono text-center tracking-wider">
+                  НАЖМИТЕ НА ЛЕВОЙ<br />ЧАСТИ ЭКРАНА
+                </p>
+              </div>
+            )
+          )}
+        </div>
+      </div>
+
+      {/* ── ПОДВАЛ ── */}
+      <div className="flex items-center justify-between px-8 py-3 flex-shrink-0"
+        style={{ background: 'rgba(0,0,0,0.4)', borderTop: '1px solid rgba(33,160,56,0.15)' }}>
+        <div className="flex items-center gap-6">
+          {['VISA', 'MASTERCARD', 'МИР', 'NFC'].map(s => (
+            <span key={s} className="text-[#1a3a22] text-[9px] font-mono tracking-widest px-2 py-1 rounded"
+              style={{ border: '1px solid rgba(33,160,56,0.1)' }}>{s}</span>
+          ))}
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="w-2 h-2 rounded-full"
+            style={{ background: '#21A038', boxShadow: '0 0 6px #21A038' }} />
+          <span className="text-[#1a3a22] text-[9px] font-mono tracking-widest">ЗАЩИЩЁННОЕ СОЕДИНЕНИЕ</span>
+        </div>
+        <p className="text-[#1a3a22] text-[9px] font-mono tracking-widest">© СБЕРБАНК · POS v2.4.1</p>
       </div>
     </div>
   );
